@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SC-DATA | Event Monitor Dashboard — Minggu 9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue-50:#EFF6FF; --blue-100:#DBEAFE; --blue-500:#3B82F6;
+  --blue-600:#2563EB; --blue-700:#1D4ED8; --blue-800:#1E40AF; --blue-900:#1E3A8A;
+  --green-50:#F0FDF4; --green-100:#DCFCE7; --green-500:#22C55E;
+  --green-600:#16A34A; --green-700:#15803D;
+  --amber-50:#FFFBEB; --amber-100:#FEF3C7; --amber-500:#F59E0B; --amber-700:#B45309;
+  --red-50:#FFF1F2; --red-100:#FFE4E6; --red-500:#EF4444; --red-700:#B91C1C;
+  --teal-500:#14B8A6; --teal-700:#0F766E;
+  --gray-50:#F9FAFB; --gray-100:#F3F4F6; --gray-200:#E5E7EB;
+  --gray-300:#D1D5DB; --gray-500:#6B7280; --gray-700:#374151; --gray-900:#111827;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+  --shadow:    0 2px 12px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 24px rgba(0,0,0,.10);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.14);
+  --radius-sm: 8px; --radius: 14px; --radius-lg: 20px;
+  --font: 'Plus Jakarta Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  font-family: var(--font);
+  background: linear-gradient(135deg, #EEF2FF 0%, #F0FDF4 50%, #FFF7ED 100%);
+  min-height: 100vh;
+  color: var(--gray-900);
+  font-size: 14px;
+}
+
+/* ── LAYOUT ── */
+.layout { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: linear-gradient(180deg, #0F172A 0%, #1E3A8A 40%, #1E40AF 100%);
+  color: white;
+  padding: 1.5rem 1.25rem;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.sidebar-logo { display: flex; align-items: center; gap: 10px; margin-bottom: .5rem; }
+.logo-badge {
+  background: white; color: var(--blue-800);
+  font-weight: 800; font-size: .7rem; padding: 4px 10px;
+  border-radius: 99px; letter-spacing: .06em; text-transform: uppercase;
+}
+.sidebar-title { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+.sidebar-sub   { font-size: .75rem; opacity: .65; margin-top: 2px; }
+.sidebar-divider { border: none; border-top: 1px solid rgba(255,255,255,.12); margin: .25rem 0; }
+
+.sidebar-section-label {
+  font-size: .65rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; opacity: .5; margin-bottom: .5rem;
+}
+
+.control-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.control-label { font-size: .8rem; opacity: .8; }
+.control-val {
+  background: rgba(255,255,255,.15);
+  padding: 3px 10px; border-radius: 99px;
+  font-size: .8rem; font-weight: 600;
+  font-family: var(--mono);
+}
+
+input[type="range"] {
+  width: 100%; accent-color: #60A5FA;
+  margin: .4rem 0;
+}
+.range-labels { display: flex; justify-content: space-between; font-size: .7rem; opacity: .5; }
+
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-box {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  padding: .75rem .6rem;
+  text-align: center;
+}
+.stat-val { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+.stat-lbl { font-size: .65rem; opacity: .6; margin-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
+
+.progress-wrap { margin-top: .25rem; }
+.progress-bar-bg {
+  background: rgba(255,255,255,.15);
+  border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 4px;
+}
+.progress-bar-fill {
+  background: linear-gradient(90deg, #60A5FA, #34D399);
+  height: 100%; border-radius: 99px;
+  transition: width .6s ease;
+}
+.progress-text { font-size: .72rem; opacity: .65; text-align: right; }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: .7rem 1rem;
+  border-radius: 10px; border: none; cursor: pointer;
+  font-family: var(--font); font-size: .85rem; font-weight: 700;
+  transition: all .18s;
+}
+.btn-primary {
+  background: white; color: var(--blue-800);
+  box-shadow: 0 2px 12px rgba(0,0,0,.2);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+.btn-primary:active { transform: scale(.97); }
+.btn-secondary {
+  background: rgba(255,255,255,.1);
+  color: white; border: 1px solid rgba(255,255,255,.2);
+}
+.btn-secondary:hover { background: rgba(255,255,255,.18); }
+
+.sidebar-note {
+  margin-top: auto;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 10px;
+  padding: .75rem;
+  font-size: .72rem;
+  opacity: .7;
+  line-height: 1.5;
+}
+
+/* ── MAIN ── */
+.main { padding: 1.5rem 2rem; }
+
+.page-header {
+  background: linear-gradient(135deg, #1E40AF 0%, #0369A1 60%, #0F766E 100%);
+  color: white; border-radius: var(--radius-lg);
+  padding: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem;
+}
+.header-left h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -.5px; }
+.header-left p { font-size: .85rem; opacity: .8; margin-top: 4px; }
+.header-right { text-align: right; }
+.ts-chip {
+  display: inline-block;
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.3);
+  padding: 4px 14px; border-radius: 99px;
+  font-size: .78rem; font-family: var(--mono);
+  white-space: nowrap;
+}
+.header-badge {
+  display: inline-block;
+  background: rgba(255,255,255,.15);
+  padding: 3px 12px; border-radius: 99px;
+  font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .05em;
+  margin-top: 6px;
+}
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; top: 1.5rem; right: 1.5rem; z-index: 9999;
+  background: white; border-radius: var(--radius);
+  padding: .9rem 1.25rem;
+  box-shadow: var(--shadow-lg);
+  border-left: 4px solid var(--green-500);
+  font-size: .85rem; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+  transform: translateX(120%); opacity: 0;
+  transition: all .3s cubic-bezier(.34,1.56,.64,1);
+  min-width: 240px;
+}
+#toast.show { transform: translateX(0); opacity: 1; }
+#toast.error { border-left-color: var(--red-500); }
+
+/* ── METRIC CARDS ── */
+.metric-grid {
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.metric-card {
+  background: white; border-radius: var(--radius);
+  padding: 1.25rem; text-align: center;
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--gray-200);
+  transition: transform .15s;
+}
+.metric-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.metric-card.total  { border-top-color: var(--blue-500); }
+.metric-card.hadir  { border-top-color: var(--green-500); }
+.metric-card.izin   { border-top-color: var(--blue-500); }
+.metric-card.sakit  { border-top-color: var(--amber-500); }
+.metric-card.alfa   { border-top-color: var(--red-500); }
+.metric-val  { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+.metric-lbl  { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--gray-500); margin-top: 4px; }
+.total .metric-val  { color: var(--blue-600); }
+.hadir .metric-val  { color: var(--green-600); }
+.izin  .metric-val  { color: var(--blue-600); }
+.sakit .metric-val  { color: var(--amber-700); }
+.alfa  .metric-val  { color: var(--red-700); }
+
+/* ── SECTION CARD ── */
+.card {
+  background: white; border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+.card-header {
+  padding: .9rem 1.5rem;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: .95rem; font-weight: 700; color: var(--gray-900); display: flex; align-items: center; gap: 8px; }
+.card-badge {
+  font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+  padding: 2px 10px; border-radius: 99px;
+  background: var(--blue-50); color: var(--blue-700);
+}
+.card-body { padding: 1.25rem 1.5rem; }
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+.data-table th {
+  background: var(--gray-50); padding: .65rem 1rem;
+  text-align: left; font-size: .7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .06em; color: var(--gray-500);
+  border-bottom: 1px solid var(--gray-200);
+}
+.data-table td {
+  padding: .6rem 1rem; border-bottom: 1px solid var(--gray-100);
+  color: var(--gray-700);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--gray-50); }
+.font-mono { font-family: var(--mono); font-size: .78rem; }
+
+/* ── STATUS BADGE ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 99px;
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+}
+.badge-hadir { background: var(--green-100); color: var(--green-700); }
+.badge-izin  { background: var(--blue-100);  color: var(--blue-700);  }
+.badge-sakit { background: var(--amber-100); color: var(--amber-700); }
+.badge-alfa  { background: var(--red-100);   color: var(--red-700);   }
+
+/* ── CHART ── */
+.chart-wrap { position: relative; height: 220px; padding: .25rem 0; }
+.bar-chart-custom { display: flex; align-items: flex-end; gap: 12px; height: 180px; padding: 0 .5rem; }
+.bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 4px; }
+.bar-fill {
+  width: 100%; max-width: 56px;
+  border-radius: 8px 8px 0 0;
+  transition: height .7s cubic-bezier(.34,1.2,.64,1);
+  position: relative; cursor: pointer;
+  min-height: 4px;
+}
+.bar-fill:hover { filter: brightness(1.1); transform: scaleX(1.04); }
+.bar-fill::after {
+  content: attr(data-val);
+  position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+  font-size: .72rem; font-weight: 700; color: var(--gray-700);
+  white-space: nowrap;
+}
+.bar-label { font-size: .72rem; font-weight: 600; color: var(--gray-500); text-align: center; margin-top: 4px; }
+.chart-axis { border-top: 2px solid var(--gray-200); margin: 0 .5rem; }
+
+/* ── PROGRESS ROWS ── */
+.progress-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+}
+.progress-mk { width: 80px; font-size: .8rem; font-weight: 600; color: var(--gray-700); flex-shrink: 0; }
+.progress-track { flex: 1; background: var(--gray-100); border-radius: 99px; height: 18px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 99px; transition: width .8s ease; display: flex; align-items: center; padding-left: 8px; }
+.progress-pct { font-size: .7rem; font-weight: 700; color: white; }
+.progress-num { width: 44px; text-align: right; font-size: .8rem; font-weight: 700; }
+
+/* ── CONCEPT BOX ── */
+.concept-box {
+  background: linear-gradient(135deg, var(--blue-50), var(--green-50));
+  border: 1px solid var(--blue-100);
+  border-left: 4px solid var(--blue-500);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-size: .85rem; color: var(--blue-900); line-height: 1.65;
+  margin-bottom: 1.25rem;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 3rem 2rem; text-align: center;
+}
+.empty-icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: .5; }
+.empty-title { font-size: 1.1rem; font-weight: 700; color: var(--gray-700); }
+.empty-sub { font-size: .85rem; color: var(--gray-500); margin-top: .35rem; }
+
+/* ── CONCEPT CARDS ── */
+.concept-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 1rem; }
+.concept-card {
+  background: white; border-radius: var(--radius);
+  padding: 1.25rem; box-shadow: var(--shadow);
+  border-top: 4px solid var(--blue-500);
+}
+.concept-card.stream { border-top-color: var(--teal-500); }
+.concept-card.nrt    { border-top-color: var(--green-500); }
+.concept-card-icon { font-size: 1.5rem; margin-bottom: .5rem; }
+.concept-card-title { font-weight: 700; font-size: .9rem; margin-bottom: .5rem; }
+.concept-card-body { font-size: .8rem; color: var(--gray-500); line-height: 1.6; }
+.concept-card-code {
+  display: inline-block; margin-top: .6rem;
+  background: var(--gray-100); padding: 3px 10px;
+  border-radius: 6px; font-family: var(--mono); font-size: .72rem;
+  color: var(--gray-700);
+}
+
+/* ── ALUR STEPS ── */
+.alur-grid { display: flex; align-items: flex-start; gap: 8px; margin-top: .5rem; flex-wrap: wrap; }
+.alur-step {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--blue-50); border: 1px solid var(--blue-100);
+  border-radius: 10px; padding: .5rem .85rem;
+}
+.alur-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--blue-600); color: white;
+  font-size: .7rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.alur-text { font-size: .8rem; font-weight: 600; color: var(--blue-900); }
+.alur-arrow { color: var(--gray-400); font-size: .9rem; }
+
+/* ── EXPORT SECTION ── */
+.export-row { display: flex; gap: 12px; }
+.btn-download {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--blue-600); color: white;
+  padding: .65rem 1.25rem; border-radius: 10px;
+  font-size: .85rem; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  border: none; transition: all .15s;
+}
+.btn-download:hover { background: var(--blue-700); transform: translateY(-1px); }
+.btn-screenshot {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--gray-100); color: var(--gray-700);
+  padding: .65rem 1.25rem; border-radius: 10px;
+  font-size: .85rem; font-weight: 700;
+  border: 1px solid var(--gray-200); cursor: pointer;
+  transition: all .15s;
+}
+.btn-screenshot:hover { background: var(--gray-200); }
+
+/* ── FOOTER ── */
+.page-footer {
+  text-align: center; padding: 1.5rem 0 .75rem;
+  border-top: 1px solid var(--gray-200); margin-top: 1rem;
+  font-size: .75rem; color: var(--gray-400);
+}
+
+/* ── CHECKLIST ── */
+.checklist { list-style: none; }
+.checklist li {
+  display: flex; align-items: center; gap: 10px;
+  padding: .5rem 0; border-bottom: 1px solid var(--gray-100);
+  font-size: .85rem;
+}
+.checklist li:last-child { border-bottom: none; }
+.check-icon { font-size: 1rem; flex-shrink: 0; }
+.check-label { flex: 1; color: var(--gray-700); }
+.check-status { font-size: .72rem; font-weight: 700; padding: 2px 10px; border-radius: 99px; }
+.check-ok   { background: var(--green-100); color: var(--green-700); }
+.check-no   { background: var(--red-100);   color: var(--red-700); }
+.check-warn { background: var(--amber-100); color: var(--amber-700); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: relative; height: auto; }
+  .metric-grid { grid-template-columns: repeat(3,1fr); }
+  .concept-grid { grid-template-columns: 1fr; }
+}
+
+/* ── ANIM ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp .4s ease both; }
+.delay-1 { animation-delay: .05s; }
+.delay-2 { animation-delay: .1s; }
+.delay-3 { animation-delay: .15s; }
+.delay-4 { animation-delay: .2s; }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast" role="alert">
+  <span id="toast-icon">✅</span>
+  <span id="toast-msg">Event berhasil dimuat</span>
+</div>
+
+<div class="layout">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-badge">SC-DATA</span>
+  </div>
+  <div>
+    <div class="sidebar-title">Event Monitor</div>
+    <div class="sidebar-sub">Modul 9 — Near Real-Time Dashboard</div>
+  </div>
+
+  <hr class="sidebar-divider">
+
+  <div>
+    <div class="sidebar-section-label">⚙️ Kontrol Simulasi</div>
+    <div class="control-row">
+      <span class="control-label">Event per klik</span>
+      <span class="control-val" id="batch-val">5</span>
+    </div>
+    <input type="range" id="batch-slider" min="1" max="10" value="5"
+           oninput="document.getElementById('batch-val').textContent = this.value">
+    <div class="range-labels"><span>1</span><span>10</span></div>
+  </div>
+
+  <div>
+    <div class="sidebar-section-label">📊 Statistik Sumber</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-val" id="sb-total">36</div>
+        <div class="stat-lbl">Total</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sb-loaded">0</div>
+        <div class="stat-lbl">Dimuat</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sb-remaining">36</div>
+        <div class="stat-lbl">Sisa</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="sb-sessions">0</div>
+        <div class="stat-lbl">Sesi Load</div>
+      </div>
+    </div>
+    <div class="progress-wrap" style="margin-top:.75rem;">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="load-progress" style="width:0%"></div>
+      </div>
+      <div class="progress-text" id="load-pct">0% dimuat</div>
+    </div>
+  </div>
+
+  <hr class="sidebar-divider">
+
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <button class="btn btn-primary" onclick="loadEvents()">
+      🔄 Load Event Baru
+    </button>
+    <button class="btn btn-secondary" onclick="resetLog()">
+      🗑️ Reset event_log
+    </button>
+  </div>
+
+  <div class="sidebar-note">
+    <b>💡 Near Real-Time:</b><br>
+    Setiap klik "Load Event Baru" mensimulasikan kedatangan event streaming dari kehadiran_event.csv secara bertahap.
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+
+  <!-- HEADER -->
+  <div class="page-header fade-up">
+    <div class="header-left">
+      <h1>📊 Event Monitor Dashboard</h1>
+      <p>SC-DATA Minggu 9 · Simulasi Streaming Data & Near Real-Time Dashboard</p>
+    </div>
+    <div class="header-right">
+      <div class="ts-chip" id="last-update">⏰ Belum ada update</div>
+      <div><span class="header-badge">Modul 9 · SBDM Capstone</span></div>
+    </div>
+  </div>
+
+  <!-- METRIC CARDS (disembunyikan sampai ada data) -->
+  <div class="metric-grid fade-up delay-1" id="metric-grid" style="display:none;">
+    <div class="metric-card total">
+      <div class="metric-val" id="m-total">0</div>
+      <div class="metric-lbl">📋 Total Event</div>
+    </div>
+    <div class="metric-card hadir">
+      <div class="metric-val" id="m-hadir">0</div>
+      <div class="metric-lbl">✅ Hadir</div>
+    </div>
+    <div class="metric-card izin">
+      <div class="metric-val" id="m-izin">0</div>
+      <div class="metric-lbl">📋 Izin</div>
+    </div>
+    <div class="metric-card sakit">
+      <div class="metric-val" id="m-sakit">0</div>
+      <div class="metric-lbl">🤒 Sakit</div>
+    </div>
+    <div class="metric-card alfa">
+      <div class="metric-val" id="m-alfa">0</div>
+      <div class="metric-lbl">❌ Alfa</div>
+    </div>
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div id="empty-state" class="card fade-up delay-2">
+    <div class="empty-state">
+      <div class="empty-icon">📡</div>
+      <div class="empty-title">Dashboard Siap — Belum Ada Event</div>
+      <div class="empty-sub">Klik <b>"Load Event Baru"</b> di sidebar untuk memulai simulasi near real-time</div>
+    </div>
+    <div class="card-body">
+      <div class="concept-grid">
+        <div class="concept-card">
+          <div class="concept-card-icon">🗂️</div>
+          <div class="concept-card-title">Batch Processing</div>
+          <div class="concept-card-body">Data diproses dalam satu kelompok besar pada jadwal tertentu. Latensi tinggi (menit–jam).</div>
+          <span class="concept-card-code">Contoh: laporan rekap bulanan</span>
+        </div>
+        <div class="concept-card stream">
+          <div class="concept-card-icon">⚡</div>
+          <div class="concept-card-title">Streaming</div>
+          <div class="concept-card-body">Data diproses satu per satu saat event terjadi. Latensi milidetik. Butuh Kafka/Flink.</div>
+          <span class="concept-card-code">Contoh: deteksi fraud real-time</span>
+        </div>
+        <div class="concept-card nrt">
+          <div class="concept-card-icon">🔄</div>
+          <div class="concept-card-title">Near Real-Time</div>
+          <div class="concept-card-body">Simulasi: CSV di-refresh bertahap, latensi detik. Pendekatan yang dipakai modul ini.</div>
+          <span class="concept-card-code">Contoh: dashboard kehadiran ini</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT (tersembunyi sampai ada data) -->
+  <div id="main-content" style="display:none;">
+
+    <!-- ALUR EVENT -->
+    <div class="concept-box">
+      <strong>📌 Alur Event (Near Real-Time Simulation):</strong>
+      <div class="alur-grid" style="margin-top:.6rem;">
+        <div class="alur-step"><div class="alur-num">1</div><div class="alur-text">CSV Sumber</div></div>
+        <div class="alur-arrow">→</div>
+        <div class="alur-step"><div class="alur-num">2</div><div class="alur-text">Ingest</div></div>
+        <div class="alur-arrow">→</div>
+        <div class="alur-step"><div class="alur-num">3</div><div class="alur-text">Transform</div></div>
+        <div class="alur-arrow">→</div>
+        <div class="alur-step"><div class="alur-num">4</div><div class="alur-text">Visualisasi</div></div>
+        <div class="alur-arrow">→</div>
+        <div class="alur-step"><div class="alur-num">5</div><div class="alur-text">event_log</div></div>
+      </div>
+    </div>
+
+    <!-- ROW: TABEL + REKAP -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <!-- 10 EVENT TERBARU -->
+      <div class="card fade-up delay-1">
+        <div class="card-header">
+          <div class="card-title">📋 10 Event Terbaru</div>
+          <span class="card-badge" id="badge-count">0 event</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table" id="event-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Event ID</th>
+                <th>NIM</th>
+                <th>Mata Kuliah</th>
+                <th>Waktu Event</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="event-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REKAP STATUS -->
+      <div class="card fade-up delay-2">
+        <div class="card-header">
+          <div class="card-title">📊 Rekap Status Kehadiran</div>
+        </div>
+        <div class="card-body">
+          <div class="bar-chart-custom" id="status-chart"></div>
+          <div class="chart-axis"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEHADIRAN PER MATA KULIAH + PERSENTASE -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+      <div class="card fade-up delay-3">
+        <div class="card-header">
+          <div class="card-title">🏫 Kehadiran per Mata Kuliah</div>
+        </div>
+        <div class="card-body">
+          <div class="bar-chart-custom" id="mk-chart"></div>
+          <div class="chart-axis"></div>
+        </div>
+      </div>
+
+      <div class="card fade-up delay-4">
+        <div class="card-header">
+          <div class="card-title">📈 Tingkat Kehadiran (%)</div>
+        </div>
+        <div class="card-body" id="kehadiran-progress"></div>
+      </div>
+    </div>
+
+    <!-- EVENT LOG LENGKAP -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <div class="card-title">🗃️ Tabel event_log (Lengkap)</div>
+        <span class="card-badge" id="log-count">0 record</span>
+      </div>
+      <div style="overflow-x:auto;max-height:320px;overflow-y:auto;">
+        <table class="data-table" id="log-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Event ID</th><th>NIM</th>
+              <th>Mata Kuliah</th><th>Waktu Event</th>
+              <th>Status</th><th>Dimuat Pada</th>
+            </tr>
+          </thead>
+          <tbody id="log-tbody"></tbody>
+        </table>
+      </div>
+      <div class="card-body" style="padding-top:.75rem;">
+        <small style="color:var(--gray-500);">💾 event_log tersimpan di memori sesi ini. Gunakan tombol Export untuk menyimpan ke file.</small>
+      </div>
+    </div>
+
+    <!-- CHECKLIST VALIDASI -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <div class="card-title">✅ Checklist Validasi Dosen — Minggu 9</div>
+      </div>
+      <div class="card-body">
+        <ul class="checklist" id="checklist">
+          <li><span class="check-icon">✅</span><span class="check-label">kehadiran_event.csv tersedia (≥30 event)</span><span class="check-status check-ok">Ada · 36 event</span></li>
+          <li><span class="check-icon">✅</span><span class="check-label">App dapat dijalankan tanpa error</span><span class="check-status check-ok">Ada · app.py</span></li>
+          <li><span class="check-icon" id="cl-log-icon">⏳</span><span class="check-label">event_log terisi setelah klik Load</span><span class="check-status check-warn" id="cl-log">Belum</span></li>
+          <li><span class="check-icon">⚠️</span><span class="check-label">Screenshot dashboard tersimpan</span><span class="check-status check-warn">Perlu manual</span></li>
+          <li><span class="check-icon">✅</span><span class="check-label">Diagram alur event tersedia</span><span class="check-status check-ok">Ada · .mmd</span></li>
+          <li><span class="check-icon">✅</span><span class="check-label">Narasi 1 halaman tersedia</span><span class="check-status check-ok">Ada · .md</span></li>
+          <li><span class="check-icon">✅</span><span class="check-label">AI Usage Log tersedia</span><span class="check-status check-ok">Ada · .csv</span></li>
+          <li><span class="check-icon" id="cl-graf-icon">⏳</span><span class="check-label">Grafik status kehadiran tampil</span><span class="check-status check-warn" id="cl-graf">Belum</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="card fade-up">
+      <div class="card-header">
+        <div class="card-title">💾 Export & Screenshot</div>
+      </div>
+      <div class="card-body">
+        <div class="export-row">
+          <button class="btn-download" onclick="exportCSV()">⬇️ Download event_log.csv</button>
+          <button class="btn-screenshot" onclick="showScreenshotTip()">📸 Screenshot Tips</button>
+        </div>
+        <div id="screenshot-tip" style="display:none;margin-top:1rem;padding:.85rem;background:var(--amber-50);border:1px solid var(--amber-100);border-radius:10px;font-size:.83rem;color:var(--amber-700);line-height:1.6;">
+          <b>Tips Screenshot:</b><br>
+          • Windows: <code>Win + Shift + S</code> (Snipping Tool) atau <code>PrtSc</code><br>
+          • Mac: <code>Cmd + Shift + 4</code><br>
+          • Chrome: F12 → Ctrl+Shift+P → ketik "screenshot"<br>
+          Simpan di folder <code>outputs/screenshots/</code>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- CONCEPT FOOTER (selalu tampil) -->
+  <div class="concept-box fade-up" style="margin-top:1rem;">
+    <strong>📖 Catatan Konsep Near Real-Time:</strong>
+    Dashboard ini mensimulasikan near real-time dengan memuat event dari CSV secara bertahap setiap klik tombol.
+    Data sumber tetap berupa file batch, namun proses load bertahap + timestamp + event_log
+    membuat perilakunya menyerupai streaming sederhana — cukup untuk skala proyek capstone kampus.
+  </div>
+
+  <div class="page-footer">
+    SC-DATA · Minggu 9 — Event Monitor Dashboard · Sistem Basis Data Modern dan Arsitektur Data SIAP AI<br>
+    Dosen: Oni Bibin Bintoro / Ashari Abidin · ISTN
+  </div>
+
+</main>
+</div>
+
+<script>
+// ── DATA SUMBER ──
+const SOURCE_DATA = [
+  {event_id:"EVT001",nim:"2301001",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:00:10",status_hadir:"hadir"},
+  {event_id:"EVT002",nim:"2301002",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:01:15",status_hadir:"hadir"},
+  {event_id:"EVT003",nim:"2301003",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:02:20",status_hadir:"izin"},
+  {event_id:"EVT004",nim:"2301004",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:03:05",status_hadir:"hadir"},
+  {event_id:"EVT005",nim:"2301005",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:04:11",status_hadir:"sakit"},
+  {event_id:"EVT006",nim:"2301006",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:05:32",status_hadir:"alfa"},
+  {event_id:"EVT007",nim:"2301007",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:06:18",status_hadir:"hadir"},
+  {event_id:"EVT008",nim:"2301008",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:07:40",status_hadir:"hadir"},
+  {event_id:"EVT009",nim:"2301009",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:08:45",status_hadir:"izin"},
+  {event_id:"EVT010",nim:"2301010",kode_mk:"SBDM01",waktu_event:"2026-05-25 08:09:55",status_hadir:"hadir"},
+  {event_id:"EVT011",nim:"2301011",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:00:02",status_hadir:"hadir"},
+  {event_id:"EVT012",nim:"2301012",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:01:13",status_hadir:"hadir"},
+  {event_id:"EVT013",nim:"2301013",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:02:24",status_hadir:"alfa"},
+  {event_id:"EVT014",nim:"2301014",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:03:35",status_hadir:"hadir"},
+  {event_id:"EVT015",nim:"2301015",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:04:46",status_hadir:"sakit"},
+  {event_id:"EVT016",nim:"2301016",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:05:57",status_hadir:"hadir"},
+  {event_id:"EVT017",nim:"2301017",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:07:08",status_hadir:"izin"},
+  {event_id:"EVT018",nim:"2301018",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:08:19",status_hadir:"hadir"},
+  {event_id:"EVT019",nim:"2301019",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:09:30",status_hadir:"hadir"},
+  {event_id:"EVT020",nim:"2301020",kode_mk:"AIAR01",waktu_event:"2026-05-25 09:10:41",status_hadir:"hadir"},
+  {event_id:"EVT021",nim:"2301021",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:00:12",status_hadir:"hadir"},
+  {event_id:"EVT022",nim:"2301022",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:01:23",status_hadir:"izin"},
+  {event_id:"EVT023",nim:"2301023",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:02:34",status_hadir:"hadir"},
+  {event_id:"EVT024",nim:"2301024",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:03:45",status_hadir:"hadir"},
+  {event_id:"EVT025",nim:"2301025",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:04:56",status_hadir:"alfa"},
+  {event_id:"EVT026",nim:"2301026",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:06:07",status_hadir:"sakit"},
+  {event_id:"EVT027",nim:"2301027",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:07:18",status_hadir:"hadir"},
+  {event_id:"EVT028",nim:"2301028",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:08:29",status_hadir:"hadir"},
+  {event_id:"EVT029",nim:"2301029",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:09:40",status_hadir:"izin"},
+  {event_id:"EVT030",nim:"2301030",kode_mk:"DBMS02",waktu_event:"2026-05-25 10:10:51",status_hadir:"hadir"},
+  {event_id:"EVT031",nim:"2301031",kode_mk:"STAT01",waktu_event:"2026-05-25 11:00:10",status_hadir:"hadir"},
+  {event_id:"EVT032",nim:"2301032",kode_mk:"STAT01",waktu_event:"2026-05-25 11:01:20",status_hadir:"hadir"},
+  {event_id:"EVT033",nim:"2301033",kode_mk:"STAT01",waktu_event:"2026-05-25 11:02:30",status_hadir:"izin"},
+  {event_id:"EVT034",nim:"2301034",kode_mk:"STAT01",waktu_event:"2026-05-25 11:03:40",status_hadir:"hadir"},
+  {event_id:"EVT035",nim:"2301035",kode_mk:"STAT01",waktu_event:"2026-05-25 11:04:50",status_hadir:"alfa"},
+  {event_id:"EVT036",nim:"2301036",kode_mk:"STAT01",waktu_event:"2026-05-25 11:06:00",status_hadir:"sakit"},
+];
+
+// ── STATE ──
+let eventLog = [];
+let loadedIds = new Set();
+let sessionCount = 0;
+
+const COLORS = {
+  hadir: '#22C55E', izin: '#3B82F6', sakit: '#F59E0B', alfa: '#EF4444'
+};
+const MK_COLORS = ['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6'];
+
+function fmtDate(d) {
+  const dt = new Date(d);
+  return dt.toLocaleString('id-ID', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = isError ? '❌' : '✅';
+  t.classList.toggle('error', isError);
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function updateSidebarStats() {
+  const total = SOURCE_DATA.length;
+  const loaded = loadedIds.size;
+  const rem = total - loaded;
+  const pct = Math.round(loaded / total * 100);
+  document.getElementById('sb-total').textContent = total;
+  document.getElementById('sb-loaded').textContent = loaded;
+  document.getElementById('sb-remaining').textContent = rem;
+  document.getElementById('sb-sessions').textContent = sessionCount;
+  document.getElementById('load-progress').style.width = pct + '%';
+  document.getElementById('load-pct').textContent = pct + '% dimuat';
+}
+
+function updateMetrics() {
+  const counts = { hadir:0, izin:0, sakit:0, alfa:0 };
+  eventLog.forEach(e => { if(counts[e.status_hadir] !== undefined) counts[e.status_hadir]++; });
+  document.getElementById('m-total').textContent  = eventLog.length;
+  document.getElementById('m-hadir').textContent  = counts.hadir;
+  document.getElementById('m-izin').textContent   = counts.izin;
+  document.getElementById('m-sakit').textContent  = counts.sakit;
+  document.getElementById('m-alfa').textContent   = counts.alfa;
+  document.getElementById('metric-grid').style.display = 'grid';
+}
+
+function updateEventTable() {
+  const top10 = [...eventLog].reverse().slice(0, 10);
+  const tbody = document.getElementById('event-tbody');
+  tbody.innerHTML = top10.map((e, i) => `
+    <tr>
+      <td class="font-mono">${i + 1}</td>
+      <td class="font-mono">${e.event_id}</td>
+      <td class="font-mono">${e.nim}</td>
+      <td><strong>${e.kode_mk}</strong></td>
+      <td class="font-mono" style="font-size:.75rem;">${fmtDate(e.waktu_event)}</td>
+      <td><span class="badge badge-${e.status_hadir}">${e.status_hadir}</span></td>
+    </tr>
+  `).join('');
+  document.getElementById('badge-count').textContent = eventLog.length + ' event';
+}
+
+function updateStatusChart() {
+  const counts = { hadir:0, izin:0, sakit:0, alfa:0 };
+  eventLog.forEach(e => { if(counts[e.status_hadir] !== undefined) counts[e.status_hadir]++; });
+  const max = Math.max(...Object.values(counts), 1);
+  const wrap = document.getElementById('status-chart');
+  wrap.innerHTML = Object.entries(counts).map(([s, v]) => `
+    <div class="bar-group">
+      <div class="bar-fill" style="height:${(v/max*160)}px;background:${COLORS[s]};" data-val="${v}"></div>
+      <div class="bar-label">${s}</div>
+    </div>
+  `).join('');
+}
+
+function updateMKChart() {
+  const mks = [...new Set(SOURCE_DATA.map(e => e.kode_mk))];
+  const mkCounts = {};
+  mks.forEach(mk => {
+    mkCounts[mk] = 0;
+    eventLog.filter(e => e.kode_mk === mk).forEach(() => mkCounts[mk]++);
+  });
+  const max = Math.max(...Object.values(mkCounts), 1);
+  const wrap = document.getElementById('mk-chart');
+  wrap.innerHTML = Object.entries(mkCounts).map(([mk, v], i) => `
+    <div class="bar-group">
+      <div class="bar-fill" style="height:${(v/max*160)}px;background:${MK_COLORS[i % MK_COLORS.length]};" data-val="${v}"></div>
+      <div class="bar-label">${mk}</div>
+    </div>
+  `).join('');
+}
+
+function updateProgress() {
+  const mks = [...new Set(SOURCE_DATA.map(e => e.kode_mk))];
+  const wrap = document.getElementById('kehadiran-progress');
+  wrap.innerHTML = mks.map(mk => {
+    const total = eventLog.filter(e => e.kode_mk === mk).length;
+    const hadir = eventLog.filter(e => e.kode_mk === mk && e.status_hadir === 'hadir').length;
+    const pct = total > 0 ? Math.round(hadir / total * 100) : 0;
+    const color = pct >= 75 ? '#10B981' : pct >= 50 ? '#F59E0B' : '#EF4444';
+    return `
+      <div class="progress-row">
+        <div class="progress-mk">${mk}</div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${pct}%;background:${color};">
+            <span class="progress-pct">${pct > 15 ? pct+'%' : ''}</span>
+          </div>
+        </div>
+        <div class="progress-num" style="color:${color};">${pct}%</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateLogTable() {
+  const tbody = document.getElementById('log-tbody');
+  const all = [...eventLog].reverse();
+  tbody.innerHTML = all.map((e, i) => `
+    <tr>
+      <td class="font-mono">${i + 1}</td>
+      <td class="font-mono">${e.event_id}</td>
+      <td class="font-mono">${e.nim}</td>
+      <td><strong>${e.kode_mk}</strong></td>
+      <td class="font-mono" style="font-size:.75rem;">${fmtDate(e.waktu_event)}</td>
+      <td><span class="badge badge-${e.status_hadir}">${e.status_hadir}</span></td>
+      <td class="font-mono" style="font-size:.72rem;color:var(--gray-500);">${fmtDate(e.loaded_at)}</td>
+    </tr>
+  `).join('');
+  document.getElementById('log-count').textContent = eventLog.length + ' record';
+}
+
+function updateChecklist() {
+  if (eventLog.length > 0) {
+    document.getElementById('cl-log').textContent = 'Ada · ' + eventLog.length + ' record';
+    document.getElementById('cl-log').className = 'check-status check-ok';
+    document.getElementById('cl-log-icon').textContent = '✅';
+    document.getElementById('cl-graf').textContent = 'Ada · tampil';
+    document.getElementById('cl-graf').className = 'check-status check-ok';
+    document.getElementById('cl-graf-icon').textContent = '✅';
+  }
+}
+
+function renderAll() {
+  updateMetrics();
+  updateEventTable();
+  updateStatusChart();
+  updateMKChart();
+  updateProgress();
+  updateLogTable();
+  updateSidebarStats();
+  updateChecklist();
+  const now = new Date();
+  document.getElementById('last-update').textContent = '🕐 Update: ' + fmtDate(now);
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+}
+
+function loadEvents() {
+  const batch = parseInt(document.getElementById('batch-slider').value);
+  const remaining = SOURCE_DATA.filter(e => !loadedIds.has(e.event_id));
+  if (remaining.length === 0) {
+    showToast('Semua event sudah dimuat!', true); return;
+  }
+  const toLoad = remaining.slice(0, batch);
+  const now = new Date().toISOString();
+  toLoad.forEach(e => {
+    loadedIds.add(e.event_id);
+    eventLog.push({ ...e, loaded_at: now });
+  });
+  sessionCount++;
+  renderAll();
+  showToast(`✓ ${toLoad.length} event baru berhasil dimuat`);
+}
+
+function resetLog() {
+  if (!confirm('Reset semua event_log? Data yang sudah dimuat akan hilang.')) return;
+  eventLog = [];
+  loadedIds = new Set();
+  sessionCount = 0;
+  document.getElementById('metric-grid').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+  document.getElementById('main-content').style.display = 'none';
+  updateSidebarStats();
+  document.getElementById('last-update').textContent = '⏰ Belum ada update';
+  document.getElementById('cl-log').textContent = 'Belum';
+  document.getElementById('cl-log').className = 'check-status check-warn';
+  document.getElementById('cl-log-icon').textContent = '⏳';
+  document.getElementById('cl-graf').textContent = 'Belum';
+  document.getElementById('cl-graf').className = 'check-status check-warn';
+  document.getElementById('cl-graf-icon').textContent = '⏳';
+  showToast('Event log dikosongkan', false);
+}
+
+function exportCSV() {
+  if (eventLog.length === 0) { showToast('Belum ada data untuk diekspor', true); return; }
+  const header = 'log_id,event_id,nim,kode_mk,waktu_event,status_hadir,loaded_at';
+  const rows = eventLog.map((e, i) =>
+    `${i+1},${e.event_id},${e.nim},${e.kode_mk},${e.waktu_event},${e.status_hadir},${e.loaded_at}`
+  );
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `event_log_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('event_log.csv berhasil diunduh');
+}
+
+function showScreenshotTip() {
+  const tip = document.getElementById('screenshot-tip');
+  tip.style.display = tip.style.display === 'none' ? 'block' : 'none';
+}
+
+// Init
+updateSidebarStats();
+</script>
+</body>
+</html>
